@@ -1,53 +1,56 @@
 import { galleryItems } from './gallery-items.js';
 // Change code below this line
 
-
 console.log(galleryItems);
+
 const imgGallery = document.querySelector('.gallery');
-console.log(imgGallery);
-
-const listImages = galleryItems
-                    .map(item => `<div class='gallery__item'>
-                                    <a class="gallery__link" href=${item.original}>
-                                        <img class='gallery__image'
-                                            src = ${item.preview}
-                                            data-source = ${item.original}
-                                            alt = ${item.description}
-                                        />
-                                    </a>
-                                </div>`)
-                    .join('');
-
+const listImages = createGalleryCard(galleryItems);
 imgGallery.innerHTML = listImages;
+
+function createGalleryCard(galleryItems) {
+  return galleryItems
+    .map(({ preview, original, description }) => {
+      return `
+  <div class="gallery__item">
+  <a class="gallery__link" href="${original}">
+    <img
+      class="gallery__image"
+      src="${preview}"
+      data-source="${original}"
+      alt="${description}"
+    />
+    </a>
+    </div>`;
+    })
+    .join('');
+}
 
 imgGallery.addEventListener('click', showModal);
 
-function showModal (event) {
-    const link = getLinkOriginalImage(event);
-    
-    const instance = basicLightbox.create(`<img src=${link} width = "800" height ="600">`);
+function showModal(event) {
+  event.preventDefault();
+  if (!event.target.classList.contains('gallery__image')) {
+    return;
+  }
+  const instance = basicLightbox.create(
+    `<img
+      class="gallery__image"
+      src="${event.target.dataset.source}"
+      data-source="${event.target.dataset.source}"
+      alt="${event.target.alt}"
+    />`,
+    {
+      onShow: instance => addEventListener('onShow', instance),
+      onClose: instance => removeEventListener('onClose', instance),
+    },
+  );
 
-    instance.show(window.addEventListener('keydown', isEscapeDown));
-    
-    function isEscapeDown (evt) {
-        if (evt.code === 'Escape'){
-            instance.close(window.removeEventListener('keydown', isEscapeDown));        
-        };
+  instance.show();
+
+  window.addEventListener('keydown', onEscKeyPress);
+  function onEscKeyPress(event) {
+    if (event.code === 'Escape') {
+      instance.close();
     }
+  }
 }
-
-function getLinkOriginalImage(event) {
-    if (event.target.nodeName !== 'IMG'){
-        return;
-    }
-    
-    event.preventDefault();
-    
-    const linkImagePreview = event.target;
-    const linkImageOriginal = galleryItems.find(item => item.preview === linkImagePreview.src).original;
-    
-    return linkImageOriginal;
-}
-
-
-
